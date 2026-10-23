@@ -1,4 +1,3 @@
-/* Reset and base styles */
 * {
     margin: 0;
     padding: 0;
@@ -19,7 +18,6 @@ body {
     min-height: 100vh;
 }
 
-/* Header */
 header {
     text-align: center;
     margin-bottom: 30px;
@@ -39,14 +37,12 @@ header p {
     opacity: 0.9;
 }
 
-/* Main content */
 main {
     display: flex;
     flex-direction: column;
     gap: 25px;
 }
 
-/* Coffee Counter Section */
 .coffee-counter {
     background: white;
     padding: 30px;
@@ -67,8 +63,16 @@ main {
     background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
 }
 
+.counter-row {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
 .counter-display {
-    margin-bottom: 20px;
+    min-width: 180px;
+    margin-bottom: 10px;
 }
 
 .counter-number {
@@ -76,12 +80,24 @@ main {
     font-weight: 600;
     color: #8b5a3c;
     margin-bottom: 10px;
+    line-height: 1;
+}
+
+.caffeine-number {
+    color: #2d6a4f;
 }
 
 .counter-display p {
     font-size: 1.2rem;
     color: #666;
     font-weight: 500;
+}
+
+.counter-note {
+    margin-top: 10px;
+    color: #666;
+    font-size: 0.9rem;
+    font-style: italic;
 }
 
 .counter-controls {
@@ -91,7 +107,6 @@ main {
     flex-wrap: wrap;
 }
 
-/* Buttons */
 .add-btn, .reset-btn, .submit-btn, .cancel-btn {
     padding: 12px 24px;
     border: none;
@@ -143,7 +158,6 @@ main {
     transform: translateY(-2px);
 }
 
-/* Add Coffee Form */
 .add-coffee-form {
     background: white;
     padding: 30px;
@@ -168,6 +182,30 @@ main {
     margin-bottom: 8px;
     font-weight: 500;
     color: #555;
+}
+
+.checkbox-row {
+    margin-top: -5px;
+}
+
+.checkbox-label {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: auto;
+    margin: 0;
+}
+
+.helper-text {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #666;
+    line-height: 1.4;
 }
 
 .form-group select,
@@ -196,7 +234,6 @@ main {
     flex-wrap: wrap;
 }
 
-/* Coffee History */
 .coffee-history,
 .statistics {
     background: white;
@@ -221,202 +258,106 @@ main {
 
 .empty-message {
     text-align: center;
-    color: #999;
+    color: #777;
     font-style: italic;
-    padding: 40px 20px;
 }
 
 .coffee-item {
-    background: #f8f9fa;
-    padding: 20px;
+    background: #f8f8f8;
     border-radius: 15px;
-    border-left: 5px solid #ff6b6b;
-    position: relative;
-    transition: transform 0.3s ease;
-}
-
-.coffee-item:hover {
-    transform: translateX(5px);
-}
-
-.coffee-item:nth-child(even) {
-    border-left-color: #4ecdc4;
-}
-
-.coffee-item:nth-child(3n) {
-    border-left-color: #45b7d1;
+    padding: 15px;
+    border: 1px solid #eee;
 }
 
 .coffee-meta {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 10px;
+    gap: 15px;
+    align-items: center;
 }
 
 .coffee-details {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .coffee-type {
-    font-weight: 600;
     font-size: 1.1rem;
+    font-weight: 600;
     color: #333;
-    margin-bottom: 5px;
 }
 
-.coffee-size {
+.coffee-size,
+.coffee-caffeine,
+.coffee-time {
     color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 3px;
+    font-size: 0.95rem;
 }
 
 .coffee-notes {
     color: #888;
-    font-size: 0.9rem;
     font-style: italic;
-}
-
-.coffee-time {
-    font-weight: 500;
-    color: #8b5a3c;
-    font-size: 1rem;
+    font-size: 0.85rem;
 }
 
 .delete-btn {
-    background: #ff7675;
+    background: #ff6b6b;
     color: white;
     border: none;
     border-radius: 50%;
     width: 30px;
     height: 30px;
+    font-size: 1.2rem;
     cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-.delete-btn:hover {
-    background: #d63031;
-    transform: scale(1.1);
-}
-
-/* Statistics */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 25px;
+    background: #f8f8f8;
     border-radius: 15px;
+    padding: 20px 15px;
     text-align: center;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    border: 1px solid #eee;
 }
 
 .stat-number {
     display: block;
     font-size: 2rem;
     font-weight: 600;
+    color: #8b5a3c;
     margin-bottom: 8px;
 }
 
 .stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    font-weight: 300;
+    font-size: 0.95rem;
+    color: #666;
 }
 
-/* Footer */
 footer {
     text-align: center;
-    margin-top: 40px;
-    padding: 20px;
-    color: white;
-    opacity: 0.8;
+    padding: 20px 0 10px;
+    color: rgba(255,255,255,0.8);
 }
 
-/* Animations */
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.coffee-item {
-    animation: fadeIn 0.5s ease;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-    
-    header h1 {
-        font-size: 2rem;
-    }
-    
-    .counter-number {
-        font-size: 3rem;
-    }
-    
-    .coffee-counter,
-    .add-coffee-form,
-    .coffee-history,
-    .statistics {
-        padding: 20px;
-    }
-    
-    .counter-controls {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-    
+@media (max-width: 600px) {
+    .counter-row,
     .coffee-meta {
         flex-direction: column;
         align-items: flex-start;
     }
-    
-    .coffee-time {
-        margin-top: 10px;
-    }
-}
 
-@media (max-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr;
-    }
-    
-    .add-btn, .reset-btn, .submit-btn, .cancel-btn {
-        width: 100%;
-        max-width: 200px;
     }
 }

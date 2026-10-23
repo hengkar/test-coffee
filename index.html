@@ -15,22 +15,29 @@
         </header>
 
         <main>
-            <!-- Coffee Counter Section -->
             <section class="coffee-counter">
-                <div class="counter-display">
-                    <div class="counter-number">
-                        <span id="todayCount">0</span>
+                <div class="counter-row">
+                    <div class="counter-display">
+                        <div class="counter-number">
+                            <span id="todayCount">0</span>
+                        </div>
+                        <p>Cups today</p>
                     </div>
-                    <p>Cups today</p>
+
+                    <div class="counter-display">
+                        <div class="counter-number caffeine-number">
+                            <span id="todayCaffeine">0 mg</span>
+                        </div>
+                        <p>Estimated caffeine</p>
+                    </div>
                 </div>
-                
                 <div class="counter-controls">
                     <button id="addCoffeeBtn" class="add-btn">+ Add Coffee</button>
                     <button id="resetBtn" class="reset-btn">Reset Today</button>
                 </div>
+                <p class="counter-note">Estimated values only. Not medical advice.</p>
             </section>
 
-            <!-- Add Coffee Form -->
             <section class="add-coffee-form" id="addCoffeeForm" style="display: none;">
                 <h3>Add a Coffee</h3>
                 <form id="coffeeForm">
@@ -50,7 +57,7 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="coffeeSize">Size:</label>
                         <select id="coffeeSize" required>
@@ -61,17 +68,30 @@
                             <option value="Extra Large">Extra Large (20 oz)</option>
                         </select>
                     </div>
-                    
+
+                    <div class="form-group">
+                        <label for="coffeeCaffeine">Estimated caffeine (mg):</label>
+                        <input type="number" id="coffeeCaffeine" min="0" step="1" placeholder="Auto-filled estimate">
+                        <small class="helper-text">Estimated using typical USDA / National Coffee Association ranges for standard serving sizes. Actual caffeine varies by bean, roast, and brew method. This is an estimate, not medical advice.</small>
+                    </div>
+
+                    <div class="form-group checkbox-row">
+                        <label for="coffeeDecaf" class="checkbox-label">
+                            <input type="checkbox" id="coffeeDecaf">
+                            Decaf
+                        </label>
+                    </div>
+
                     <div class="form-group">
                         <label for="coffeeTime">Time:</label>
                         <input type="time" id="coffeeTime" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="coffeeNotes">Notes (optional):</label>
                         <input type="text" id="coffeeNotes" placeholder="e.g., extra shot, decaf, etc.">
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" class="submit-btn">Add Coffee</button>
                         <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
@@ -79,7 +99,6 @@
                 </form>
             </section>
 
-            <!-- Coffee History -->
             <section class="coffee-history">
                 <h3>Today's Coffee History</h3>
                 <div id="coffeeList" class="coffee-list">
@@ -87,7 +106,6 @@
                 </div>
             </section>
 
-            <!-- Statistics -->
             <section class="statistics">
                 <h3>Statistics</h3>
                 <div class="stats-grid">
