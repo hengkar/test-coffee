@@ -1,7 +1,150 @@
+const STORAGE_KEYS = {
+    coffeeData: 'coffeeData',
+    coffeeGoal: 'coffeeGoal'
+};
+
+const SUPPORTED_BACKUP_VERSION = 1;
+
+function normalizeCoffeeEntry(entry, index = 0) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        throw new Error(`Entry at index ${index} must be an object.`);
+    }
+
+    const type = typeof entry.type === 'string' ? entry.type.trim() : '';
+    const size = typeof entry.size === 'string' ? entry.size.trim() : '';
+    const time = typeof entry.time === 'string' ? entry.time.trim() : '';
+    const date = typeof entry.date === 'string' ? entry.date.trim() : '';
+    const notes = typeof entry.notes === 'string' ? entry.notes : '';
+    const id = Number(entry.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        throw new Error(`Entry at index ${index} has an invalid "id".`);
+    }
+
+    if (!type) {
+        throw new Error(`Entry at index ${index} is missing a valid "type".`);
+    }
+
+    if (!size) {
+        throw new Error(`Entry at index ${index} is missing a valid "size".`);
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(time)) {
+        throw new Error(`Entry at index ${index} has an invalid "time" value. Use HH:MM.`);
+    }
+
+    if (!date) {
+        throw new Error(`Entry at index ${index} is missing a valid "date".`);
+    }
+
+    return {
+        id,
+        type,
+        size,
+        time,
+        notes,
+        date
+    };
+}
+
+const CoffeeBackup = {
+    createPayload(entries = [], dailyGoal = 0) {
+        const normalizedEntries = Array.isArray(entries) ? entries.map((entry, index) => normalizeCoffeeEntry(entry, index)) : [];
+        const normalizedGoal = Number.isFinite(Number(dailyGoal)) && Number(dailyGoal) >= 0 ? Math.floor(Number(dailyGoal)) : 0;
+
+        return {
+            version: SUPPORTED_BACKUP_VERSION,
+            exportedAt: new Date().toISOString(),
+            entries: normalizedEntries,
+            dailyGoal: normalizedGoal
+        };
+    },
+
+    validatePayload(payload) {
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+            throw new Error('Backup file must be a JSON object.');
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(payload, 'version')) {
+            throw new Error('Backup file is missing the "version" field.');
+        }
+
+        if (!Number.isInteger(payload.version) || payload.version !== SUPPORTED_BACKUP_VERSION) {
+            throw new Error(`Unsupported backup version: ${payload.version}. Supported version: ${SUPPORTED_BACKUP_VERSION}.`);
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(payload, 'entries') || !Array.isArray(payload.entries)) {
+            throw new Error('Backup file is missing the "entries" array.');
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(payload, 'dailyGoal') || !Number.isInteger(payload.dailyGoal) || payload.dailyGoal < 0) {
+            throw new Error('Backup file has an invalid "dailyGoal" value.');
+        }
+
+        const entries = payload.entries.map((entry, index) => normalizeCoffeeEntry(entry, index));
+
+        return {
+            version: payload.version,
+            exportedAt: typeof payload.exportedAt === 'string' ? payload.exportedAt : undefined,
+            entries,
+            dailyGoal: payload.dailyGoal
+        };
+    },
+
+    parseJson(rawText) {
+        try {
+            const parsed = JSON.parse(rawText);
+            return this.validatePayload(parsed);
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                throw new Error('The file is not valid JSON.');
+            }
+            throw error;
+        }
+    }
+};
+
 class CoffeeTracker {
     constructor() {
-        this.coffeeData = JSON.parse(localStorage.getItem('coffeeData')) || [];
-        this.init();
+        this.storageKeys = STORAGE_KEYS;
+        this.supportedBackupVersion = SUPPORTED_BACKUP_VERSION;
+        this.coffeeData = this.readStoredData();
+        this.dailyGoal = this.readStoredGoal();
+
+        if (typeof document !== 'undefined') {
+            this.init();
+        }
+    }
+
+    readStoredData() {
+        if (typeof localStorage === 'undefined') {
+            return [];
+        }
+
+        try {
+            const storedValue = localStorage.getItem(this.storageKeys.coffeeData);
+            if (!storedValue) {
+                return [];
+            }
+
+            const parsed = JSON.parse(storedValue);
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+
+            return parsed.map((entry, index) => normalizeCoffeeEntry(entry, index));
+        } catch (error) {
+            return [];
+        }
+    }
+
+    readStoredGoal() {
+        if (typeof localStorage === 'undefined') {
+            return 0;
+        }
+
+        const storedGoal = Number.parseInt(localStorage.getItem(this.storageKeys.coffeeGoal), 10);
+        return Number.isInteger(storedGoal) && storedGoal >= 0 ? storedGoal : 0;
     }
 
     init() {
@@ -11,26 +154,78 @@ class CoffeeTracker {
     }
 
     setupEventListeners() {
-        // Add coffee button
-        document.getElementById('addCoffeeBtn').addEventListener('click', () => {
-            this.showAddForm();
-        });
+        const addCoffeeBtn = document.getElementById('addCoffeeBtn');
+        if (addCoffeeBtn) {
+            addCoffeeBtn.addEventListener('click', () => {
+                this.showAddForm();
+            });
+        }
 
-        // Reset button
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            this.resetToday();
-        });
+        const resetBtn = document.getElementById('resetBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetToday();
+            });
+        }
 
-        // Cancel button
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            this.hideAddForm();
-        });
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.hideAddForm();
+            });
+        }
 
-        // Coffee form submission
-        document.getElementById('coffeeForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.addCoffee();
-        });
+        const setGoalBtn = document.getElementById('setGoalBtn');
+        if (setGoalBtn) {
+            setGoalBtn.addEventListener('click', () => {
+                this.setDailyGoalFromInput();
+            });
+        }
+
+        const goalInput = document.getElementById('dailyGoalInput');
+        if (goalInput) {
+            goalInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    this.setDailyGoalFromInput();
+                }
+            });
+        }
+
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportData();
+            });
+        }
+
+        const importBtn = document.getElementById('importBtn');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                const importFileInput = document.getElementById('importFileInput');
+                if (importFileInput) {
+                    importFileInput.click();
+                }
+            });
+        }
+
+        const importFileInput = document.getElementById('importFileInput');
+        if (importFileInput) {
+            importFileInput.addEventListener('change', (event) => {
+                const file = event.target.files && event.target.files[0];
+                if (file) {
+                    this.importDataFromFile(file);
+                }
+                event.target.value = '';
+            });
+        }
+
+        const coffeeForm = document.getElementById('coffeeForm');
+        if (coffeeForm) {
+            coffeeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.addCoffee();
+            });
+        }
     }
 
     showAddForm() {
@@ -45,9 +240,29 @@ class CoffeeTracker {
     }
 
     setCurrentTime() {
+        const coffeeTimeInput = document.getElementById('coffeeTime');
+        if (!coffeeTimeInput) {
+            return;
+        }
+
         const now = new Date();
         const timeString = now.toTimeString().slice(0, 5);
-        document.getElementById('coffeeTime').value = timeString;
+        coffeeTimeInput.value = timeString;
+    }
+
+    setDailyGoalFromInput() {
+        const rawValue = document.getElementById('dailyGoalInput').value;
+        const parsedValue = Number.parseInt(rawValue, 10);
+
+        if (!Number.isInteger(parsedValue) || parsedValue < 0) {
+            alert('Please enter a non-negative whole number for your daily goal.');
+            return;
+        }
+
+        this.dailyGoal = parsedValue;
+        this.saveData();
+        this.updateDisplay();
+        this.showNotification('Daily goal updated');
     }
 
     addCoffee() {
@@ -74,8 +289,6 @@ class CoffeeTracker {
         this.saveData();
         this.updateDisplay();
         this.hideAddForm();
-        
-        // Show success message
         this.showNotification('Coffee added successfully! ☕');
     }
 
@@ -104,18 +317,37 @@ class CoffeeTracker {
     }
 
     updateDisplay() {
+        this.updateGoalDisplay();
         this.updateTodayCount();
         this.updateCoffeeList();
         this.updateStatistics();
     }
 
+    updateGoalDisplay() {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        const goalInput = document.getElementById('dailyGoalInput');
+        if (goalInput) {
+            goalInput.value = this.dailyGoal;
+        }
+    }
+
     updateTodayCount() {
         const todaysCoffee = this.getTodaysCoffee();
-        document.getElementById('todayCount').textContent = todaysCoffee.length;
+        const todayCount = document.getElementById('todayCount');
+        if (todayCount) {
+            todayCount.textContent = todaysCoffee.length;
+        }
     }
 
     updateCoffeeList() {
         const coffeeList = document.getElementById('coffeeList');
+        if (!coffeeList) {
+            return;
+        }
+
         const todaysCoffee = this.getTodaysCoffee();
 
         if (todaysCoffee.length === 0) {
@@ -123,7 +355,6 @@ class CoffeeTracker {
             return;
         }
 
-        // Sort by time (latest first)
         todaysCoffee.sort((a, b) => {
             const timeA = new Date(`2000/01/01 ${a.time}`);
             const timeB = new Date(`2000/01/01 ${b.time}`);
@@ -149,29 +380,47 @@ class CoffeeTracker {
 
     updateStatistics() {
         const totalCups = this.coffeeData.length;
-        document.getElementById('totalCups').textContent = totalCups;
+        const totalCupsElement = document.getElementById('totalCups');
+        const avgPerDayElement = document.getElementById('avgPerDay');
+        const favoriteTypeElement = document.getElementById('favoriteType');
+        const goalStatElement = document.getElementById('goalStat');
 
-        // Calculate average per day
+        if (totalCupsElement) {
+            totalCupsElement.textContent = totalCups;
+        }
+
+        if (goalStatElement) {
+            goalStatElement.textContent = this.dailyGoal;
+        }
+
         if (totalCups === 0) {
-            document.getElementById('avgPerDay').textContent = '0';
-            document.getElementById('favoriteType').textContent = '-';
+            if (avgPerDayElement) {
+                avgPerDayElement.textContent = '0';
+            }
+            if (favoriteTypeElement) {
+                favoriteTypeElement.textContent = '-';
+            }
             return;
         }
 
         const dates = [...new Set(this.coffeeData.map(coffee => coffee.date))];
         const avgPerDay = (totalCups / dates.length).toFixed(1);
-        document.getElementById('avgPerDay').textContent = avgPerDay;
+        if (avgPerDayElement) {
+            avgPerDayElement.textContent = avgPerDay;
+        }
 
-        // Find favorite coffee type
         const typeCount = {};
         this.coffeeData.forEach(coffee => {
             typeCount[coffee.type] = (typeCount[coffee.type] || 0) + 1;
         });
 
-        const favoriteType = Object.keys(typeCount).reduce((a, b) => 
+        const favoriteType = Object.keys(typeCount).reduce((a, b) =>
             typeCount[a] > typeCount[b] ? a : b
         );
-        document.getElementById('favoriteType').textContent = favoriteType;
+
+        if (favoriteTypeElement) {
+            favoriteTypeElement.textContent = favoriteType;
+        }
     }
 
     formatTime(time24) {
@@ -182,15 +431,74 @@ class CoffeeTracker {
     }
 
     clearForm() {
-        document.getElementById('coffeeForm').reset();
+        if (typeof document !== 'undefined') {
+            document.getElementById('coffeeForm').reset();
+        }
     }
 
     saveData() {
-        localStorage.setItem('coffeeData', JSON.stringify(this.coffeeData));
+        if (typeof localStorage === 'undefined') {
+            return;
+        }
+
+        localStorage.setItem(this.storageKeys.coffeeData, JSON.stringify(this.coffeeData));
+        localStorage.setItem(this.storageKeys.coffeeGoal, String(this.dailyGoal));
+    }
+
+    exportData() {
+        const payload = CoffeeBackup.createPayload(this.coffeeData, this.dailyGoal);
+        const dataStr = JSON.stringify(payload, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `coffee-backup-v${payload.version}-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        this.showNotification('Backup downloaded successfully');
+    }
+
+    importDataFromFile(file) {
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const parsedData = CoffeeBackup.parseJson(event.target.result);
+                const hasExistingHistory = this.coffeeData.length > 0 || this.dailyGoal > 0;
+
+                if (hasExistingHistory) {
+                    const message = `This backup contains ${parsedData.entries.length} entries and a daily goal of ${parsedData.dailyGoal}. Your current history will be replaced. Continue?`;
+                    if (!confirm(message)) {
+                        this.showNotification('Import cancelled');
+                        return;
+                    }
+                }
+
+                this.coffeeData = parsedData.entries.map((entry, index) => normalizeCoffeeEntry(entry, index));
+                this.dailyGoal = parsedData.dailyGoal;
+                this.saveData();
+                this.updateDisplay();
+                this.showNotification('Backup imported successfully!');
+            } catch (error) {
+                alert(`Import failed: ${error.message}`);
+            }
+        };
+
+        reader.onerror = () => {
+            alert('Import failed: the file could not be read.');
+        };
+
+        reader.readAsText(file);
     }
 
     showNotification(message) {
-        // Create a simple notification
+        if (typeof document === 'undefined') {
+            return;
+        }
+
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
@@ -206,8 +514,7 @@ class CoffeeTracker {
             font-weight: 500;
             animation: slideInRight 0.3s ease;
         `;
-        
-        // Add CSS animation
+
         if (!document.querySelector('#notification-styles')) {
             const style = document.createElement('style');
             style.id = 'notification-styles';
@@ -227,7 +534,6 @@ class CoffeeTracker {
         notification.textContent = message;
         document.body.appendChild(notification);
 
-        // Remove notification after 3 seconds
         setTimeout(() => {
             notification.style.animation = 'slideOutRight 0.3s ease';
             setTimeout(() => {
@@ -237,70 +543,30 @@ class CoffeeTracker {
             }, 300);
         }, 3000);
     }
-
-    // Export data function
-    exportData() {
-        const dataStr = JSON.stringify(this.coffeeData, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'coffee-data.json';
-        link.click();
-        URL.revokeObjectURL(url);
-    }
-
-    // Import data function
-    importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                if (Array.isArray(importedData)) {
-                    this.coffeeData = importedData;
-                    this.saveData();
-                    this.updateDisplay();
-                    this.showNotification('Data imported successfully!');
-                } else {
-                    throw new Error('Invalid data format');
-                }
-            } catch (error) {
-                alert('Error importing data. Please make sure the file is valid.');
-            }
-        };
-        reader.readAsText(file);
-    }
 }
 
-// Initialize the coffee tracker when the page loads
 let tracker;
 
-document.addEventListener('DOMContentLoaded', () => {
-    tracker = new CoffeeTracker();
-    
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + Enter to add coffee quickly
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            tracker.showAddForm();
-        }
-        
-        // Escape to close form
-        if (e.key === 'Escape') {
-            const form = document.getElementById('addCoffeeForm');
-            if (form.style.display !== 'none') {
-                tracker.hideAddForm();
-            }
-        }
-    });
-});
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        tracker = new CoffeeTracker();
 
-// Add some utility functions for potential future enhancements
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                tracker.showAddForm();
+            }
+
+            if (e.key === 'Escape') {
+                const form = document.getElementById('addCoffeeForm');
+                if (form && form.style.display !== 'none') {
+                    tracker.hideAddForm();
+                }
+            }
+        });
+    });
+}
+
 const CoffeeUtils = {
-    // Calculate caffeine content based on coffee type and size
     estimateCaffeine(type, size) {
         const caffeineMap = {
             'Espresso': { base: 63, multiplier: 1 },
@@ -323,11 +589,10 @@ const CoffeeUtils = {
 
         const coffee = caffeineMap[type] || { base: 95, multiplier: 1 };
         const sizeM = sizeMultiplier[size] || 1;
-        
+
         return Math.round(coffee.base * coffee.multiplier * sizeM);
     },
 
-    // Get coffee emoji based on type
     getCoffeeEmoji(type) {
         const emojiMap = {
             'Espresso': '☕',
@@ -343,3 +608,13 @@ const CoffeeUtils = {
         return emojiMap[type] || '☕';
     }
 };
+
+if (typeof module !== 'undefined') {
+    module.exports = {
+        CoffeeBackup,
+        CoffeeTracker,
+        CoffeeUtils,
+        STORAGE_KEYS,
+        SUPPORTED_BACKUP_VERSION
+    };
+}
