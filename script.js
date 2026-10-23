@@ -1,6 +1,113 @@
+function toLocalDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function parseLocalDateKey(dateValue) {
+    if (!dateValue) {
+        return null;
+    }
+
+    if (typeof dateValue === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            return dateValue;
+        }
+
+        const parsed = new Date(dateValue);
+        if (!Number.isNaN(parsed.getTime())) {
+            return toLocalDateKey(parsed);
+        }
+    }
+
+    if (dateValue instanceof Date) {
+        return toLocalDateKey(dateValue);
+    }
+
+    return null;
+}
+
+function formatTrendDate(dateKey) {
+    if (!dateKey || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+        return '';
+    }
+
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    return localDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function buildTrendData(records, days, endDate = new Date()) {
+    const safeDays = Number.isInteger(days) && days > 0 ? days : 0;
+    const anchorDate = endDate instanceof Date && !Number.isNaN(endDate.getTime()) ? endDate : new Date();
+    const normalizedEndDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate());
+
+    const trendDays = [];
+    for (let offset = safeDays - 1; offset >= 0; offset--) {
+        const day = new Date(normalizedEndDate);
+        day.setDate(normalizedEndDate.getDate() - offset);
+        trendDays.push({
+            dateKey: toLocalDateKey(day),
+            label: formatTrendDate(toLocalDateKey(day)),
+            total: 0
+        });
+    }
+
+    const totalsByDate = Object.create(null);
+    trendDays.forEach(day => {
+        totalsByDate[day.dateKey] = 0;
+    });
+
+    const validRecords = Array.isArray(records) ? records : [];
+    const typeCounts = {};
+
+    validRecords.forEach(record => {
+        const recordDate = parseLocalDateKey(record && record.date);
+        if (!recordDate || !Object.prototype.hasOwnProperty.call(totalsByDate, recordDate)) {
+            return;
+        }
+
+        totalsByDate[recordDate] += 1;
+
+        if (record && record.type) {
+            typeCounts[record.type] = (typeCounts[record.type] || 0) + 1;
+        }
+    });
+
+    trendDays.forEach(day => {
+        day.total = totalsByDate[day.dateKey] || 0;
+    });
+
+    const totalCups = trendDays.reduce((sum, day) => sum + day.total, 0);
+    const averageCups = safeDays === 0 ? 0 : totalCups / safeDays;
+    const favoriteType = Object.keys(typeCounts).length === 0
+        ? '-'
+        : Object.entries(typeCounts)
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+
+    return {
+        days: safeDays,
+        trendDays,
+        totalCups,
+        averageCups,
+        averageDisplay: averageCups.toFixed(1),
+        favoriteType,
+        hasData: totalCups > 0
+    };
+}
+
 class CoffeeTracker {
     constructor() {
-        this.coffeeData = JSON.parse(localStorage.getItem('coffeeData')) || [];
+        const storedData = JSON.parse(localStorage.getItem('coffeeData')) || [];
+        this.coffeeData = Array.isArray(storedData) ? storedData.map(record => {
+            const normalizedDate = parseLocalDateKey(record && record.date);
+            return {
+                ...record,
+                date: normalizedDate || (record && record.date) || toLocalDateKey(new Date())
+            };
+        }) : [];
+        this.trendWindow = 7;
         this.init();
     }
 
@@ -30,6 +137,13 @@ class CoffeeTracker {
         document.getElementById('coffeeForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.addCoffee();
+        });
+
+        document.querySelectorAll('.trend-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                this.trendWindow = Number(button.dataset.range);
+                this.updateDisplay();
+            });
         });
     }
 
@@ -67,14 +181,14 @@ class CoffeeTracker {
             size,
             time,
             notes,
-            date: new Date().toDateString()
+            date: toLocalDateKey(new Date())
         };
 
         this.coffeeData.push(coffee);
         this.saveData();
         this.updateDisplay();
         this.hideAddForm();
-        
+
         // Show success message
         this.showNotification('Coffee added successfully! ☕');
     }
@@ -90,8 +204,8 @@ class CoffeeTracker {
 
     resetToday() {
         if (confirm('Are you sure you want to reset today\'s coffee count?')) {
-            const today = new Date().toDateString();
-            this.coffeeData = this.coffeeData.filter(coffee => coffee.date !== today);
+            const today = toLocalDateKey(new Date());
+            this.coffeeData = this.coffeeData.filter(coffee => parseLocalDateKey(coffee.date) !== today);
             this.saveData();
             this.updateDisplay();
             this.showNotification('Today\'s coffee count has been reset');
@@ -99,14 +213,15 @@ class CoffeeTracker {
     }
 
     getTodaysCoffee() {
-        const today = new Date().toDateString();
-        return this.coffeeData.filter(coffee => coffee.date === today);
+        const today = toLocalDateKey(new Date());
+        return this.coffeeData.filter(coffee => parseLocalDateKey(coffee.date) === today);
     }
 
     updateDisplay() {
         this.updateTodayCount();
         this.updateCoffeeList();
         this.updateStatistics();
+        this.updateTrendView();
     }
 
     updateTodayCount() {
@@ -151,27 +266,76 @@ class CoffeeTracker {
         const totalCups = this.coffeeData.length;
         document.getElementById('totalCups').textContent = totalCups;
 
-        // Calculate average per day
         if (totalCups === 0) {
             document.getElementById('avgPerDay').textContent = '0';
             document.getElementById('favoriteType').textContent = '-';
             return;
         }
 
-        const dates = [...new Set(this.coffeeData.map(coffee => coffee.date))];
+        const dates = [...new Set(this.coffeeData.map(coffee => parseLocalDateKey(coffee.date)).filter(Boolean))];
         const avgPerDay = (totalCups / dates.length).toFixed(1);
         document.getElementById('avgPerDay').textContent = avgPerDay;
 
-        // Find favorite coffee type
         const typeCount = {};
         this.coffeeData.forEach(coffee => {
             typeCount[coffee.type] = (typeCount[coffee.type] || 0) + 1;
         });
 
-        const favoriteType = Object.keys(typeCount).reduce((a, b) => 
+        const favoriteType = Object.keys(typeCount).reduce((a, b) =>
             typeCount[a] > typeCount[b] ? a : b
         );
         document.getElementById('favoriteType').textContent = favoriteType;
+    }
+
+    updateTrendView() {
+        const range = this.trendWindow || 7;
+        const trendData = buildTrendData(this.coffeeData, range, new Date());
+        const trendTable = document.getElementById('trendTable');
+        const trendStatus = document.getElementById('trendStatus');
+        const trendSummary = document.getElementById('trendSummary');
+        const trendChart = document.getElementById('trendChart');
+
+        document.querySelectorAll('.trend-btn').forEach(button => {
+            button.classList.toggle('active', Number(button.dataset.range) === range);
+            button.setAttribute('aria-pressed', String(Number(button.dataset.range) === range));
+        });
+
+        const totalSummary = `${trendData.totalCups} cups`;
+        const avgSummary = `${trendData.averageDisplay} avg/day`;
+        const favoriteSummary = trendData.favoriteType === '-' ? 'No coffee yet' : trendData.favoriteType;
+        trendSummary.innerHTML = `
+            <div class="trend-metric"><strong>${totalSummary}</strong><span>Total</span></div>
+            <div class="trend-metric"><strong>${avgSummary}</strong><span>Average</span></div>
+            <div class="trend-metric"><strong>${favoriteSummary}</strong><span>Most common</span></div>
+        `;
+
+        if (trendData.trendDays.length === 0) {
+            trendChart.innerHTML = '<p class="empty-message">No trend data available for this period.</p>';
+            trendTable.innerHTML = '<tr><td colspan="3">No coffee recorded in this period.</td></tr>';
+            trendStatus.textContent = 'No data for this period';
+            return;
+        }
+
+        const dayHeight = Math.max(20, 100 / Math.max(...trendData.trendDays.map(day => day.total || 1), 1));
+        const bars = trendData.trendDays.map((day) => {
+            const height = day.total === 0 ? 8 : Math.max(18, day.total * dayHeight);
+            return `
+                <div class="trend-bar-wrap" title="${day.label}: ${day.total} cups">
+                    <div class="trend-bar" style="height:${height}px;" aria-label="${day.label}: ${day.total} cups"></div>
+                    <span class="trend-bar-value">${day.total}</span>
+                    <span class="trend-bar-label">${day.label.split(' ')[0]}</span>
+                </div>
+            `;
+        }).join('');
+
+        trendChart.innerHTML = `<div class="trend-bars">${bars}</div>`;
+        trendTable.innerHTML = trendData.trendDays.map(day => `
+            <tr>
+                <th scope="row">${day.label}</th>
+                <td>${day.total}</td>
+            </tr>
+        `).join('');
+        trendStatus.textContent = `${trendData.totalCups} total cups in the last ${range} days`;
     }
 
     formatTime(time24) {
@@ -278,25 +442,42 @@ class CoffeeTracker {
 // Initialize the coffee tracker when the page loads
 let tracker;
 
-document.addEventListener('DOMContentLoaded', () => {
-    tracker = new CoffeeTracker();
-    
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + Enter to add coffee quickly
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            tracker.showAddForm();
-        }
-        
-        // Escape to close form
-        if (e.key === 'Escape') {
-            const form = document.getElementById('addCoffeeForm');
-            if (form.style.display !== 'none') {
-                tracker.hideAddForm();
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        tracker = new CoffeeTracker();
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter to add coffee quickly
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                tracker.showAddForm();
             }
-        }
+
+            // Escape to close form
+            if (e.key === 'Escape') {
+                const form = document.getElementById('addCoffeeForm');
+                if (form.style.display !== 'none') {
+                    tracker.hideAddForm();
+                }
+            }
+        });
     });
-});
+}
+
+// Expose helpers for tests and future enhancements
+if (typeof globalThis !== 'undefined') {
+    globalThis.toLocalDateKey = toLocalDateKey;
+    globalThis.parseLocalDateKey = parseLocalDateKey;
+    globalThis.buildTrendData = buildTrendData;
+    globalThis.CoffeeTracker = CoffeeTracker;
+}
+
+if (typeof globalThis !== 'undefined' && typeof document !== 'undefined' && globalThis !== document) {
+    globalThis.CoffeeTracker = CoffeeTracker;
+    globalThis.toLocalDateKey = toLocalDateKey;
+    globalThis.parseLocalDateKey = parseLocalDateKey;
+    globalThis.buildTrendData = buildTrendData;
+}
 
 // Add some utility functions for potential future enhancements
 const CoffeeUtils = {

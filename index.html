@@ -105,6 +105,32 @@
                     </div>
                 </div>
             </section>
+
+            <section class="trend-section" aria-labelledby="trend-heading">
+                <div class="trend-header">
+                    <h3 id="trend-heading">Coffee Trends</h3>
+                    <div class="trend-controls" role="group" aria-label="Select trend range">
+                        <button type="button" class="trend-btn active" data-range="7" aria-pressed="true">7 days</button>
+                        <button type="button" class="trend-btn" data-range="30" aria-pressed="false">30 days</button>
+                    </div>
+                </div>
+                <div id="trendSummary" class="trend-summary" aria-live="polite"></div>
+                <div id="trendStatus" class="trend-status" aria-live="polite">0 total cups in the last 7 days</div>
+                <div id="trendChart" class="trend-chart" aria-label="Coffee trend chart"></div>
+                <div class="trend-table-wrap">
+                    <table class="trend-table" aria-label="Coffee consumption by day">
+                        <caption class="sr-only">Daily cup totals for the selected period</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Cups</th>
+                                <th scope="col">Avg/day</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trendTable"></tbody>
+                    </table>
+                </div>
+            </section>
         </main>
 
         <footer>
