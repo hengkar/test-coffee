@@ -84,15 +84,49 @@ main {
     font-weight: 500;
 }
 
-.counter-controls {
+.counter-controls,
+.goal-controls,
+.backup-actions {
     display: flex;
     gap: 15px;
     justify-content: center;
     flex-wrap: wrap;
 }
 
+.goal-panel {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.goal-panel label {
+    font-weight: 600;
+    color: #555;
+}
+
+#dailyGoalInput {
+    width: min(220px, 100%);
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+#dailyGoalInput:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.backup-actions {
+    margin-top: 20px;
+}
+
 /* Buttons */
-.add-btn, .reset-btn, .submit-btn, .cancel-btn {
+.add-btn, .reset-btn, .submit-btn, .cancel-btn, .goal-btn, .secondary-btn {
     padding: 12px 24px;
     border: none;
     border-radius: 25px;
@@ -121,6 +155,18 @@ main {
 .reset-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(116, 185, 255, 0.3);
+}
+
+.goal-btn,
+.secondary-btn {
+    background: linear-gradient(135deg, #f4b942, #f39c12);
+    color: white;
+}
+
+.goal-btn:hover,
+.secondary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(243, 156, 18, 0.25);
 }
 
 .submit-btn {
@@ -390,7 +436,9 @@ footer {
         padding: 20px;
     }
     
-    .counter-controls {
+    .counter-controls,
+    .goal-controls,
+    .backup-actions {
         flex-direction: column;
         align-items: center;
     }
@@ -415,8 +463,10 @@ footer {
         grid-template-columns: 1fr;
     }
     
-    .add-btn, .reset-btn, .submit-btn, .cancel-btn {
+    .add-btn, .reset-btn, .submit-btn, .cancel-btn, .goal-btn, .secondary-btn {
         width: 100%;
         max-width: 200px;
+    }
+}
     }
 }

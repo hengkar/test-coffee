@@ -23,10 +23,24 @@
                     </div>
                     <p>Cups today</p>
                 </div>
-                
+
                 <div class="counter-controls">
                     <button id="addCoffeeBtn" class="add-btn">+ Add Coffee</button>
                     <button id="resetBtn" class="reset-btn">Reset Today</button>
+                </div>
+
+                <div class="goal-panel">
+                    <label for="dailyGoalInput">Daily goal</label>
+                    <div class="goal-controls">
+                        <input type="number" id="dailyGoalInput" min="0" max="50" step="1" placeholder="e.g. 3">
+                        <button id="setGoalBtn" class="goal-btn">Save Goal</button>
+                    </div>
+                </div>
+
+                <div class="backup-actions">
+                    <button id="exportBtn" class="secondary-btn">Export</button>
+                    <button id="importBtn" class="secondary-btn">Import</button>
+                    <input id="importFileInput" type="file" accept=".json,application/json" hidden>
                 </div>
             </section>
 
@@ -50,7 +64,7 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="coffeeSize">Size:</label>
                         <select id="coffeeSize" required>
@@ -61,17 +75,17 @@
                             <option value="Extra Large">Extra Large (20 oz)</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="coffeeTime">Time:</label>
                         <input type="time" id="coffeeTime" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="coffeeNotes">Notes (optional):</label>
                         <input type="text" id="coffeeNotes" placeholder="e.g., extra shot, decaf, etc.">
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" class="submit-btn">Add Coffee</button>
                         <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
@@ -98,6 +112,10 @@
                     <div class="stat-card">
                         <span class="stat-number" id="avgPerDay">0</span>
                         <span class="stat-label">Avg/Day</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="goalStat">0</span>
+                        <span class="stat-label">Daily Goal</span>
                     </div>
                     <div class="stat-card">
                         <span class="stat-number" id="favoriteType">-</span>
