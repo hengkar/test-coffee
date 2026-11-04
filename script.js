@@ -56,6 +56,13 @@ class CoffeeTracker {
         document.getElementById('coffeeTime').value = timeString;
     }
 
+    getLocalDate(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     addCoffee() {
         const type = document.getElementById('coffeeType').value;
         const size = document.getElementById('coffeeSize').value;
