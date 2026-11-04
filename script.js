@@ -17,6 +17,12 @@ class CoffeeTracker {
     }
 
     setupEventListeners() {
+        // Goal form submission
+        document.getElementById('goalForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveDailyGoal();
+        });
+
         // Add coffee button
         document.getElementById('addCoffeeBtn').addEventListener('click', () => {
             this.showAddForm();
@@ -54,6 +60,32 @@ class CoffeeTracker {
         const now = new Date();
         const timeString = now.toTimeString().slice(0, 5);
         document.getElementById('coffeeTime').value = timeString;
+    }
+
+    getLocalDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    saveDailyGoal() {
+        const dailyGoalInput = document.getElementById('dailyGoal');
+        const rawGoal = dailyGoalInput.value.trim();
+        const goal = Number(rawGoal);
+        const isValidGoal = rawGoal !== '' && Number.isInteger(goal) && goal >= 1 && goal <= 100;
+
+        if (!isValidGoal) {
+            dailyGoalInput.setAttribute('aria-invalid', 'true');
+            this.updateGoalStatus('Enter a whole number from 1 to 100 for your personal cup target.');
+            return;
+        }
+
+        dailyGoalInput.removeAttribute('aria-invalid');
+        this.dailyGoal = goal;
+        localStorage.setItem('coffeeDailyGoal', String(this.dailyGoal));
+        this.updateGoalProgress();
     }
 
     addCoffee() {
@@ -117,7 +149,22 @@ class CoffeeTracker {
 
     updateTodayCount() {
         const todaysCoffee = this.getTodaysCoffee();
-        document.getElementById('todayCount').textContent = todaysCoffee.length;
+        const todaysCount = todaysCoffee.length;
+        document.getElementById('todayCount').textContent = todaysCount;
+        this.updateGoalProgress(todaysCount);
+    }
+
+    updateGoalProgress(todaysCount = this.getTodaysCoffee().length) {
+        const goalProgress = document.getElementById('goalProgress');
+        goalProgress.max = this.dailyGoal;
+        goalProgress.value = Math.min(todaysCount, this.dailyGoal);
+        this.updateGoalStatus(
+            `You've logged ${todaysCount} cup${todaysCount === 1 ? '' : 's'} today. Personal goal: ${this.dailyGoal}.`
+        );
+    }
+
+    updateGoalStatus(message) {
+        document.getElementById('goalStatus').textContent = message;
     }
 
     updateCoffeeList() {
@@ -284,25 +331,27 @@ class CoffeeTracker {
 // Initialize the coffee tracker when the page loads
 let tracker;
 
-document.addEventListener('DOMContentLoaded', () => {
-    tracker = new CoffeeTracker();
-    
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + Enter to add coffee quickly
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            tracker.showAddForm();
-        }
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        tracker = new CoffeeTracker();
         
-        // Escape to close form
-        if (e.key === 'Escape') {
-            const form = document.getElementById('addCoffeeForm');
-            if (form.style.display !== 'none') {
-                tracker.hideAddForm();
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter to add coffee quickly
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                tracker.showAddForm();
             }
-        }
+            
+            // Escape to close form
+            if (e.key === 'Escape') {
+                const form = document.getElementById('addCoffeeForm');
+                if (form.style.display !== 'none') {
+                    tracker.hideAddForm();
+                }
+            }
+        });
     });
-});
+}
 
 // Add some utility functions for potential future enhancements
 const CoffeeUtils = {
@@ -349,3 +398,7 @@ const CoffeeUtils = {
         return emojiMap[type] || '☕';
     }
 };
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { CoffeeTracker, CoffeeUtils };
+}
