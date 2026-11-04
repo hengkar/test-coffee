@@ -32,6 +32,25 @@ class CoffeeTracker {
             this.hideAddForm();
         });
 
+        // History date change
+        document.getElementById('historyDate').addEventListener('change', (e) => {
+            this.selectedDate = e.target.value || this.getLocalDate();
+            this.updateCoffeeList();
+        });
+
+        // Today history shortcut
+        document.getElementById('todayHistoryBtn').addEventListener('click', () => {
+            this.selectedDate = this.getLocalDate();
+            document.getElementById('historyDate').value = this.selectedDate;
+            this.updateCoffeeList();
+        });
+
+        // Daily goal form
+        document.getElementById('goalForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveDailyGoal();
+        });
+
         // Coffee form submission
         document.getElementById('coffeeForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -42,12 +61,16 @@ class CoffeeTracker {
     showAddForm() {
         document.getElementById('addCoffeeForm').style.display = 'block';
         document.getElementById('addCoffeeForm').scrollIntoView({ behavior: 'smooth' });
-        this.setCurrentTime();
+        if (this.editingId === null) {
+            this.setCurrentTime();
+        }
     }
 
     hideAddForm() {
         document.getElementById('addCoffeeForm').style.display = 'none';
         this.clearForm();
+        this.editingId = null;
+        this.setFormModeAdding();
     }
 
     setCurrentTime() {
@@ -67,22 +90,42 @@ class CoffeeTracker {
             return;
         }
 
-        const coffee = {
-            id: Date.now(),
-            type,
-            size,
-            time,
-            notes,
-            date: new Date().toDateString()
-        };
+        const isEditing = this.editingId !== null;
+        if (isEditing) {
+            const coffeeIndex = this.coffeeData.findIndex(coffee => coffee.id === this.editingId);
+            if (coffeeIndex === -1) {
+                this.editingId = null;
+                this.showNotification('Entry no longer exists');
+                return;
+            }
 
-        this.coffeeData.push(coffee);
+            const currentCoffee = this.coffeeData[coffeeIndex];
+            this.coffeeData[coffeeIndex] = {
+                ...currentCoffee,
+                type,
+                size,
+                time,
+                notes
+            };
+        } else {
+            const coffee = {
+                id: Date.now(),
+                type,
+                size,
+                time,
+                notes,
+                date: new Date().toDateString()
+            };
+
+            this.coffeeData.push(coffee);
+        }
+
         this.saveData();
         this.updateDisplay();
         this.hideAddForm();
         
         // Show success message
-        this.showNotification('Coffee added successfully! ☕');
+        this.showNotification(isEditing ? 'Coffee updated successfully! ☕' : 'Coffee added successfully! ☕');
     }
 
     deleteCoffee(id) {
@@ -109,8 +152,13 @@ class CoffeeTracker {
         return this.coffeeData.filter(coffee => coffee.date === today);
     }
 
+    getCoffeeForSelectedDate() {
+        return this.coffeeData.filter(coffee => this.normalizeStoredDate(coffee.date) === this.selectedDate);
+    }
+
     updateDisplay() {
         this.updateTodayCount();
+        this.updateGoalStatus();
         this.updateCoffeeList();
         this.updateStatistics();
     }
@@ -122,21 +170,28 @@ class CoffeeTracker {
 
     updateCoffeeList() {
         const coffeeList = document.getElementById('coffeeList');
-        const todaysCoffee = this.getTodaysCoffee();
+        const historyHeading = document.getElementById('historyHeading');
+        const selectedDateCoffee = this.getCoffeeForSelectedDate();
+        const isTodaySelected = this.selectedDate === this.getLocalDate();
+        historyHeading.textContent = isTodaySelected
+            ? 'Today\'s Coffee History'
+            : `Coffee History for ${this.formatDateHeading(this.selectedDate)}`;
 
-        if (todaysCoffee.length === 0) {
-            coffeeList.innerHTML = '<p class="empty-message">No coffee recorded today. Add your first cup!</p>';
+        if (selectedDateCoffee.length === 0) {
+            coffeeList.innerHTML = isTodaySelected
+                ? '<p class="empty-message">No coffee recorded today. Add your first cup!</p>'
+                : '<p class="empty-message">No coffee recorded for this date.</p>';
             return;
         }
 
         // Sort by time (latest first)
-        todaysCoffee.sort((a, b) => {
+        selectedDateCoffee.sort((a, b) => {
             const timeA = new Date(`2000/01/01 ${a.time}`);
             const timeB = new Date(`2000/01/01 ${b.time}`);
             return timeB - timeA;
         });
 
-        coffeeList.innerHTML = todaysCoffee.map(coffee => `
+        coffeeList.innerHTML = selectedDateCoffee.map(coffee => `
             <div class="coffee-item">
                 <div class="coffee-meta">
                     <div class="coffee-details">
@@ -146,11 +201,27 @@ class CoffeeTracker {
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div class="coffee-time">${this.formatTime(coffee.time)}</div>
+                        <button class="edit-btn" onclick="tracker.editCoffee(${coffee.id})" aria-label="Edit ${coffee.type} at ${this.formatTime(coffee.time)}">Edit</button>
                         <button class="delete-btn" onclick="tracker.deleteCoffee(${coffee.id})" title="Delete this entry">×</button>
                     </div>
                 </div>
             </div>
         `).join('');
+    }
+
+    editCoffee(id) {
+        const coffee = this.coffeeData.find(entry => entry.id === id);
+        if (!coffee) {
+            return;
+        }
+
+        this.editingId = id;
+        document.getElementById('coffeeType').value = coffee.type;
+        document.getElementById('coffeeSize').value = coffee.size;
+        document.getElementById('coffeeTime').value = coffee.time;
+        document.getElementById('coffeeNotes').value = coffee.notes || '';
+        this.setFormModeEditing(coffee.date);
+        this.showAddForm();
     }
 
     updateStatistics() {
@@ -189,6 +260,84 @@ class CoffeeTracker {
 
     clearForm() {
         document.getElementById('coffeeForm').reset();
+    }
+
+    setFormModeAdding() {
+        document.getElementById('coffeeFormHeading').textContent = 'Add a Coffee';
+        document.getElementById('saveCoffeeBtn').textContent = 'Add Coffee';
+        const editingDate = document.getElementById('editingDate');
+        editingDate.hidden = true;
+        editingDate.textContent = '';
+    }
+
+    setFormModeEditing(dateString) {
+        document.getElementById('coffeeFormHeading').textContent = 'Edit Coffee';
+        document.getElementById('saveCoffeeBtn').textContent = 'Save Changes';
+        const editingDate = document.getElementById('editingDate');
+        editingDate.hidden = false;
+        editingDate.textContent = `Editing entry from ${this.formatDateHeading(this.normalizeStoredDate(dateString))}`;
+    }
+
+    saveDailyGoal() {
+        const goalInput = document.getElementById('dailyGoal');
+        const nextGoal = Number(goalInput.value);
+        if (!Number.isInteger(nextGoal) || nextGoal < 1 || nextGoal > 100) {
+            alert('Please enter a goal between 1 and 100.');
+            goalInput.value = this.dailyGoal;
+            return;
+        }
+
+        this.dailyGoal = nextGoal;
+        localStorage.setItem('coffeeDailyGoal', String(nextGoal));
+        this.updateGoalStatus();
+        this.showNotification('Daily goal updated');
+    }
+
+    updateGoalStatus() {
+        const todaysCoffee = this.getTodaysCoffee().length;
+        const goalProgress = document.getElementById('goalProgress');
+        const goalStatus = document.getElementById('goalStatus');
+        goalProgress.max = this.dailyGoal;
+        goalProgress.value = todaysCoffee;
+
+        if (todaysCoffee >= this.dailyGoal) {
+            goalStatus.textContent = `Goal reached! ${todaysCoffee}/${this.dailyGoal} cups today.`;
+        } else {
+            goalStatus.textContent = `${todaysCoffee}/${this.dailyGoal} cups today`;
+        }
+    }
+
+    normalizeStoredDate(dateValue) {
+        if (!dateValue) {
+            return '';
+        }
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            return dateValue;
+        }
+
+        const parsedDate = new Date(dateValue);
+        if (Number.isNaN(parsedDate.getTime())) {
+            return '';
+        }
+
+        return this.getLocalDate(parsedDate);
+    }
+
+    getLocalDate(date = new Date()) {
+        const offsetDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+        return offsetDate.toISOString().slice(0, 10);
+    }
+
+    formatDateHeading(dateString) {
+        if (!dateString) {
+            return 'Unknown date';
+        }
+
+        const parsedDate = new Date(`${dateString}T00:00:00`);
+        return Number.isNaN(parsedDate.getTime())
+            ? dateString
+            : parsedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     }
 
     saveData() {
@@ -303,6 +452,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { CoffeeTracker };
+}
 
 // Add some utility functions for potential future enhancements
 const CoffeeUtils = {
