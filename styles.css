@@ -299,6 +299,22 @@ main {
     justify-content: center;
 }
 
+.edit-btn {
+    background: #74b9ff;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.edit-btn:hover {
+    background: #0984e3;
+}
+
 .delete-btn:hover {
     background: #d63031;
     transform: scale(1.1);
