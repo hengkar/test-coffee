@@ -13,7 +13,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 20px;
     min-height: 100vh;
@@ -101,6 +101,7 @@ main {
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: inherit;
+    max-width: 100%;
 }
 
 .add-btn {
@@ -173,6 +174,8 @@ main {
 .form-group select,
 .form-group input {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: 12px 15px;
     border: 2px solid #e0e0e0;
     border-radius: 10px;
@@ -196,7 +199,8 @@ main {
     flex-wrap: wrap;
 }
 
-/* Coffee History */
+/* Goal, Coffee History and Statistics */
+.daily-goal,
 .coffee-history,
 .statistics {
     background: white;
@@ -205,12 +209,23 @@ main {
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
+.daily-goal h3,
 .coffee-history h3,
 .statistics h3 {
     color: #8b5a3c;
     margin-bottom: 20px;
     font-size: 1.5rem;
     text-align: center;
+}
+
+.daily-goal progress {
+    width: 100%;
+}
+
+.daily-goal,
+.coffee-history,
+.statistics {
+    overflow-wrap: anywhere;
 }
 
 .coffee-list {
@@ -257,6 +272,7 @@ main {
 
 .coffee-details {
     flex: 1;
+    min-width: 0;
 }
 
 .coffee-type {
@@ -307,7 +323,7 @@ main {
 /* Statistics */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
     gap: 20px;
 }
 
@@ -370,6 +386,19 @@ footer {
 }
 
 /* Responsive Design */
+@media (min-width: 769px) {
+    main {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .coffee-counter,
+    .daily-goal,
+    .add-coffee-form {
+        grid-column: 1 / -1;
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 15px;
@@ -384,6 +413,7 @@ footer {
     }
     
     .coffee-counter,
+    .daily-goal,
     .add-coffee-form,
     .coffee-history,
     .statistics {
