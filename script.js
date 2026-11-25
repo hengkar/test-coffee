@@ -37,6 +37,24 @@ class CoffeeTracker {
             e.preventDefault();
             this.addCoffee();
         });
+
+        document.getElementById('goalForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const goal = Number(document.getElementById('dailyGoal').value);
+            if (!Number.isInteger(goal) || goal < 1 || goal > 100) return;
+            this.dailyGoal = goal;
+            localStorage.setItem('coffeeDailyGoal', goal);
+            this.updateTodayCount();
+            this.showNotification('Daily goal saved');
+        });
+    }
+
+    getLocalDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     showAddForm() {
@@ -118,6 +136,10 @@ class CoffeeTracker {
     updateTodayCount() {
         const todaysCoffee = this.getTodaysCoffee();
         document.getElementById('todayCount').textContent = todaysCoffee.length;
+        const progress = document.getElementById('goalProgress');
+        progress.max = this.dailyGoal;
+        progress.value = Math.min(todaysCoffee.length, this.dailyGoal);
+        document.getElementById('goalStatus').textContent = `${todaysCoffee.length} of ${this.dailyGoal} cups today`;
     }
 
     updateCoffeeList() {
