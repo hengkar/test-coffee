@@ -7,9 +7,9 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #f3e8d8 0%, #ddc5a8 100%);
     min-height: 100vh;
-    color: #333;
+    color: #35251e;
 }
 
 .container {
@@ -23,20 +23,19 @@ body {
 header {
     text-align: center;
     margin-bottom: 30px;
-    color: white;
+    color: #35251e;
 }
 
 header h1 {
     font-size: 2.5rem;
     font-weight: 600;
     margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 header p {
     font-size: 1.1rem;
     font-weight: 300;
-    opacity: 0.9;
+    color: #594338;
 }
 
 /* Main content */
@@ -48,10 +47,11 @@ main {
 
 /* Coffee Counter Section */
 .coffee-counter {
-    background: white;
-    padding: 30px;
+    background: linear-gradient(135deg, #35221a, #694634);
+    color: #fff9f0;
+    padding: 40px 30px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 14px 35px rgba(53, 34, 26, 0.25);
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -64,7 +64,7 @@ main {
     left: 0;
     right: 0;
     height: 5px;
-    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+    background: #d3a66f;
 }
 
 .counter-display {
@@ -72,15 +72,16 @@ main {
 }
 
 .counter-number {
-    font-size: 4rem;
+    font-size: clamp(5rem, 12vw, 7rem);
     font-weight: 600;
-    color: #8b5a3c;
-    margin-bottom: 10px;
+    line-height: 1.1;
+    color: #fff9f0;
+    margin-bottom: 8px;
 }
 
 .counter-display p {
     font-size: 1.2rem;
-    color: #666;
+    color: #f3dfc5;
     font-weight: 500;
 }
 
@@ -104,48 +105,48 @@ main {
 }
 
 .add-btn {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-    color: white;
+    background: #f3dfc5;
+    color: #35221a;
 }
 
 .add-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 8px 25px rgba(35, 20, 13, 0.25);
 }
 
 .reset-btn {
-    background: linear-gradient(135deg, #74b9ff, #0984e3);
-    color: white;
+    background: #e8d4bc;
+    color: #35221a;
 }
 
 .reset-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(116, 185, 255, 0.3);
+    box-shadow: 0 8px 25px rgba(53, 34, 26, 0.2);
 }
 
 .submit-btn {
-    background: linear-gradient(135deg, #00b894, #00cec9);
+    background: #65412e;
     color: white;
 }
 
 .submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.3);
+    box-shadow: 0 8px 25px rgba(53, 34, 26, 0.2);
 }
 
 .cancel-btn {
-    background: #ddd;
-    color: #666;
+    background: #e8d4bc;
+    color: #35221a;
 }
 
 .cancel-btn:hover {
-    background: #ccc;
+    background: #dac0a0;
     transform: translateY(-2px);
 }
 
 /* Add Coffee Form */
 .add-coffee-form {
-    background: white;
+    background: #fffaf3;
     padding: 30px;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -153,7 +154,7 @@ main {
 }
 
 .add-coffee-form h3 {
-    color: #8b5a3c;
+    color: #65412e;
     margin-bottom: 25px;
     font-size: 1.5rem;
     text-align: center;
@@ -167,15 +168,17 @@ main {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
-    color: #555;
+    color: #513c31;
 }
 
 .form-group select,
 .form-group input {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #cbb7a3;
     border-radius: 10px;
+    background: #fffefa;
+    color: #35251e;
     font-size: 1rem;
     font-family: inherit;
     transition: border-color 0.3s ease;
@@ -184,8 +187,8 @@ main {
 .form-group select:focus,
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #81583e;
+    box-shadow: 0 0 0 3px rgba(129, 88, 62, 0.2);
 }
 
 .form-actions {
@@ -198,19 +201,32 @@ main {
 
 /* Coffee History */
 .coffee-history,
-.statistics {
-    background: white;
+.statistics,
+.daily-goal {
+    background: #fffaf3;
     padding: 30px;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 .coffee-history h3,
-.statistics h3 {
-    color: #8b5a3c;
+.statistics h3,
+.daily-goal h3 {
+    color: #65412e;
     margin-bottom: 20px;
     font-size: 1.5rem;
     text-align: center;
+}
+
+.daily-goal progress {
+    display: block;
+    width: 100%;
+    margin: 20px 0 10px;
+    accent-color: #65412e;
+}
+
+.daily-goal p {
+    color: #513c31;
 }
 
 .coffee-list {
@@ -221,16 +237,16 @@ main {
 
 .empty-message {
     text-align: center;
-    color: #999;
+    color: #70594b;
     font-style: italic;
     padding: 40px 20px;
 }
 
 .coffee-item {
-    background: #f8f9fa;
+    background: #f5eadc;
     padding: 20px;
     border-radius: 15px;
-    border-left: 5px solid #ff6b6b;
+    border-left: 5px solid #a56e47;
     position: relative;
     transition: transform 0.3s ease;
 }
@@ -240,11 +256,11 @@ main {
 }
 
 .coffee-item:nth-child(even) {
-    border-left-color: #4ecdc4;
+    border-left-color: #80563e;
 }
 
 .coffee-item:nth-child(3n) {
-    border-left-color: #45b7d1;
+    border-left-color: #b08155;
 }
 
 .coffee-meta {
@@ -262,30 +278,30 @@ main {
 .coffee-type {
     font-weight: 600;
     font-size: 1.1rem;
-    color: #333;
+    color: #35251e;
     margin-bottom: 5px;
 }
 
 .coffee-size {
-    color: #666;
+    color: #5f493c;
     font-size: 0.9rem;
     margin-bottom: 3px;
 }
 
 .coffee-notes {
-    color: #888;
+    color: #70594b;
     font-size: 0.9rem;
     font-style: italic;
 }
 
 .coffee-time {
     font-weight: 500;
-    color: #8b5a3c;
+    color: #65412e;
     font-size: 1rem;
 }
 
 .delete-btn {
-    background: #ff7675;
+    background: #914638;
     color: white;
     border: none;
     border-radius: 50%;
@@ -300,7 +316,7 @@ main {
 }
 
 .delete-btn:hover {
-    background: #d63031;
+    background: #703226;
     transform: scale(1.1);
 }
 
@@ -312,12 +328,11 @@ main {
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: #f1e3d2;
+    color: #35251e;
     padding: 25px;
     border-radius: 15px;
     text-align: center;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
 .stat-number {
@@ -329,8 +344,7 @@ main {
 
 .stat-label {
     font-size: 0.9rem;
-    opacity: 0.9;
-    font-weight: 300;
+    font-weight: 400;
 }
 
 /* Footer */
@@ -338,8 +352,7 @@ footer {
     text-align: center;
     margin-top: 40px;
     padding: 20px;
-    color: white;
-    opacity: 0.8;
+    color: #513c31;
 }
 
 /* Animations */
@@ -379,14 +392,11 @@ footer {
         font-size: 2rem;
     }
     
-    .counter-number {
-        font-size: 3rem;
-    }
-    
     .coffee-counter,
     .add-coffee-form,
     .coffee-history,
-    .statistics {
+    .statistics,
+    .daily-goal {
         padding: 20px;
     }
     

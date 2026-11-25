@@ -202,7 +202,7 @@ class CoffeeTracker {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4CAF50;
+            background: #65412e;
             color: white;
             padding: 15px 20px;
             border-radius: 10px;
