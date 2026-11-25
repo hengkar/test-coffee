@@ -25,8 +25,8 @@
                 </div>
                 
                 <div class="counter-controls">
-                    <button id="addCoffeeBtn" class="add-btn">+ Add Coffee</button>
-                    <button id="resetBtn" class="reset-btn">Reset Today</button>
+                    <button id="addCoffeeBtn" class="add-btn" aria-controls="addCoffeeForm" aria-expanded="false"><span aria-hidden="true">+</span> Add Coffee</button>
+                    <button id="resetBtn" class="reset-btn"><span aria-hidden="true">↻</span> Reset Today</button>
                 </div>
             </section>
 
@@ -37,14 +37,15 @@
                         <label for="dailyGoal">Personal target (cups):</label>
                         <input type="number" id="dailyGoal" min="1" max="100" step="1" value="3" required>
                     </div>
-                    <button type="submit" class="submit-btn">Save Goal</button>
+                    <button type="submit" class="submit-btn"><span aria-hidden="true">✓</span> Save Goal</button>
                 </form>
                 <progress id="goalProgress" value="0" max="3" aria-label="Today's cup goal progress"></progress>
                 <p id="goalStatus" role="status"></p>
             </section>
 
             <!-- Add Coffee Form -->
-            <section class="add-coffee-form" id="addCoffeeForm" style="display: none;">
+            <section class="add-coffee-form" id="addCoffeeForm" inert>
+                <div class="add-coffee-form-content">
                 <h3 id="coffeeFormHeading">Add a Coffee</h3>
                 <p id="editingDate" class="editing-date" hidden></p>
                 <form id="coffeeForm">
@@ -87,10 +88,11 @@
                     </div>
                     
                     <div class="form-actions">
-                        <button type="submit" id="saveCoffeeBtn" class="submit-btn">Add Coffee</button>
-                        <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
+                        <button type="submit" id="saveCoffeeBtn" class="submit-btn"><span aria-hidden="true">+</span> Add Coffee</button>
+                        <button type="button" id="cancelBtn" class="cancel-btn"><span aria-hidden="true">×</span> Cancel</button>
                     </div>
                 </form>
+                </div>
             </section>
 
             <!-- Coffee History -->
@@ -101,7 +103,7 @@
                         <label for="historyDate">History date:</label>
                         <input type="date" id="historyDate" required>
                     </div>
-                    <button type="button" id="todayHistoryBtn" class="reset-btn">Today</button>
+                    <button type="button" id="todayHistoryBtn" class="reset-btn"><span aria-hidden="true">▦</span> Today</button>
                 </div>
                 <div id="coffeeList" class="coffee-list" aria-live="polite">
                     <p class="empty-message">No coffee recorded today. Add your first cup!</p>
