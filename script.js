@@ -58,13 +58,23 @@ class CoffeeTracker {
     }
 
     showAddForm() {
-        document.getElementById('addCoffeeForm').style.display = 'block';
-        document.getElementById('addCoffeeForm').scrollIntoView({ behavior: 'smooth' });
+        const form = document.getElementById('addCoffeeForm');
+        form.inert = false;
+        form.classList.add('is-open');
+        document.getElementById('addCoffeeBtn').setAttribute('aria-expanded', 'true');
+        form.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
         this.setCurrentTime();
+        document.getElementById('coffeeType').focus({ preventScroll: true });
     }
 
     hideAddForm() {
-        document.getElementById('addCoffeeForm').style.display = 'none';
+        const form = document.getElementById('addCoffeeForm');
+        if (form.contains(document.activeElement)) {
+            document.getElementById('addCoffeeBtn').focus();
+        }
+        form.inert = true;
+        form.classList.remove('is-open');
+        document.getElementById('addCoffeeBtn').setAttribute('aria-expanded', 'false');
         this.clearForm();
     }
 
@@ -168,7 +178,7 @@ class CoffeeTracker {
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div class="coffee-time">${this.formatTime(coffee.time)}</div>
-                        <button class="delete-btn" onclick="tracker.deleteCoffee(${coffee.id})" title="Delete this entry">×</button>
+                        <button class="delete-btn" onclick="tracker.deleteCoffee(${coffee.id})" title="Delete this entry" aria-label="Delete this entry">×</button>
                     </div>
                 </div>
             </div>
@@ -218,51 +228,19 @@ class CoffeeTracker {
     }
 
     showNotification(message) {
-        // Create a simple notification
+        document.querySelectorAll('.notification').forEach(item => item.remove());
         const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #4CAF50;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1000;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 500;
-            animation: slideInRight 0.3s ease;
-        `;
-        
-        // Add CSS animation
-        if (!document.querySelector('#notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'notification-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
+        notification.className = 'notification';
+        notification.setAttribute('role', 'status');
         notification.textContent = message;
         document.body.appendChild(notification);
 
         // Remove notification after 3 seconds
         setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease';
+            notification.classList.add('is-leaving');
             setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
+                notification.remove();
+            }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300);
         }, 3000);
     }
 
@@ -319,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Escape to close form
         if (e.key === 'Escape') {
             const form = document.getElementById('addCoffeeForm');
-            if (form.style.display !== 'none') {
+            if (form.classList.contains('is-open')) {
                 tracker.hideAddForm();
             }
         }
